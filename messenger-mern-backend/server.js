@@ -3,11 +3,21 @@ import mongoose from "mongoose";
 import Pusher from "pusher";
 import cors from "cors";
 
-//db config
+import mongoMessages from "./messageModel.js";
+
+/* app config */
+const app = express();
+const port = process.env.PORT || 9000;
+
+/* middlewares */
+app.use(express.json());
+app.use(cors());
+
+/* db config */
 const mongoURI =
   "mongodb+srv://admin:CyJEndAnxbHwJYvU@cluster0.ewhof.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 mongoose.connect(mongoURI, {
-  useCareateIndex: true,
+  useCreateIndex: true,
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -16,12 +26,30 @@ mongoose.connection.once("open", () => {
   console.log("DB CONNECTED");
 });
 
-//app config
-const app = express();
-const port = process.env.PORT || 9000;
+/* api routes */
+app.get("/", (req, res) => res.status(200).send("hello world"));
 
-//api routes
-app.get("/", (req, res) => res.status(200).send("Hello World"));
+app.post("/save/message", (req, res) => {
+  const dbMessage = req.body;
 
-// listener
-app.listen(port, () => console.log(`listening on localhost:${port}`));
+  mongoMessages.create(dbMessage, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
+app.get("/retrieve/conversation", (req, res) => {
+  mongoMessages.find((err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+
+/* listen */
+app.listen(port, () => console.log(`listening on localhost ${port}`));
